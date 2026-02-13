@@ -1,33 +1,37 @@
-name: Build Chatterbox Images
+name: Build Chatterbox Containers
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main" ]
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - gpu_type: "1650s"
-            cuda_tag: "12.1.1-devel-ubuntu22.04"
-            torch_index: "cu121"
-          - gpu_type: "5060ti"
-            cuda_tag: "12.8.0-devel-ubuntu24.04" # Blackwell optimized
-            torch_index: "cu128"
+          - gpu: "1650s"
+            cuda: "12.1.1"
+            torch: "cu121"
+          - gpu: "5060ti"
+            cuda: "12.8.0"
+            torch: "cu128" # Updated for 2026 Blackwell support
 
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
+
+      # THIS STEP FIXES THE ERROR
+      - name: Set lowercase image name
+        run: |
+          echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -41,8 +45,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.gpu_type }}
+          # Now using the lowercase IMAGE_NAME from the environment
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.gpu }}
           build-args: |
-            CUDA_TAG=${{ matrix.cuda_tag }}
-            TORCH_INDEX=${{ matrix.torch_index }}
+            CUDA_VERSION=${{ matrix.cuda }}
+            TORCH_INDEX=${{ matrix.torch }}
