@@ -1,4 +1,4 @@
-# --- Web Framework & API ---
+# --- API & Server ---
 fastapi
 uvicorn[standard]
 python-multipart
@@ -7,14 +7,13 @@ pyyaml
 aiofiles
 Jinja2
 
-# --- Chatterbox Core Dependencies (Fixes 'perth' and 'pkuseg' errors) ---
+# --- Core TTS Utils ---
 resemble-perth
-cython
-pkuseg==0.0.25
 s3tokenizer
 conformer
+cython<3.0.0
 
-# --- Specialized Audio & Math ---
+# --- Audio & Math (Fixed Versions) ---
 numpy>=1.26.0,<2.0.0
 scipy
 librosa
