@@ -1,4 +1,4 @@
-# Use runtime to save space, Matrix handles the version
+# Base image logic remains the same
 ARG CUDA_TAG=12.1.1-runtime-ubuntu22.04
 FROM nvidia/cuda:${CUDA_TAG}
 
@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Install build tools REQUIRED for pkuseg and resemble-perth
+# Install build tools + python3-dev (Required for compiling)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.10 python3-pip python3-dev build-essential git ffmpeg libsndfile1 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -18,12 +18,18 @@ ARG TORCH_INDEX=cu121
 RUN pip3 install --no-cache-dir --upgrade pip && \
     pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/${TORCH_INDEX}
 
-# 2. THE FIX: Install NumPy and Cython first so pkuseg can see them
+# 2. Install NumPy and Cython (The tools needed to REBUILD pkuseg)
 RUN pip3 install --no-cache-dir "numpy>=1.26.0,<2.0.0" "Cython<3.0.0" wheel setuptools
 
-# 3. THE FIX: Install pkuseg with NO BUILD ISOLATION
-# This forces it to use the numpy we just installed in Step 2.
-RUN pip3 install --no-cache-dir --no-build-isolation "pkuseg==0.0.25"
+# 3. THE MAGIC FIX: Download, Purge Stale C++, and Rebuild pkuseg
+# We download the source, delete the old .cpp/.c files, and force Cython to make new ones
+RUN pip3 download --no-cache-dir --no-deps pkuseg==0.0.25 && \
+    tar -xzf pkuseg-0.0.25.tar.gz && \
+    cd pkuseg-0.0.25 && \
+    find . -name "*.cpp" -delete && \
+    find . -name "*.c" -delete && \
+    python3 setup.py install && \
+    cd .. && rm -rf pkuseg-0.0.25*
 
 # 4. Install the rest of the requirements
 COPY requirements.txt .
