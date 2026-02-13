@@ -54,6 +54,7 @@ ui_state:
   last_predefined_voice: Emily.wav
   last_reference_file: Gianna.wav
   last_seed: 3000
+  split_text_into_chunks: true
   last_chunk_size: 240
   last_split_text_enabled: true
   hide_chunk_warning: false
