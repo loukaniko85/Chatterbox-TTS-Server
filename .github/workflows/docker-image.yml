@@ -25,6 +25,16 @@ jobs:
       packages: write
 
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false # Setting to false preserves the Docker engine itself
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap: true
+      
       - name: Checkout
         uses: actions/checkout@v4
 
