@@ -1,4 +1,4 @@
-# --- API & Server ---
+# --- Web & API Server ---
 fastapi
 uvicorn[standard]
 python-multipart
@@ -7,12 +7,17 @@ pyyaml
 aiofiles
 Jinja2
 
-# --- Core TTS Utils ---
+# --- Critical Configuration & Model Logic ---
+omegaconf       # <--- Fixes the 5060ti crash
+hydra-core
+diffusers
+resampy
 resemble-perth
 s3tokenizer
 conformer
+cython<3.0.0
 
-# --- Audio & Math ---
+# --- Audio Processing ---
 numpy>=1.26.0,<2.0.0
 scipy
 librosa
@@ -21,6 +26,8 @@ pydub
 audiotsm
 praat-parselmouth
 descript-audio-codec
+pyloudnorm
+silero-vad
 
 # --- ML Infrastructure ---
 transformers
