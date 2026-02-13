@@ -8,8 +8,8 @@ aiofiles
 Jinja2
 
 # --- Chatterbox Specific Dependencies (Missing from previous step) ---
-resemble-perth  # <--- THIS FIXES THE 'perth' ERROR
-pkuseg          # Required for text tokenization
+resemble-perth  
+pkuseg          
 
 # --- Specialized Audio & Math ---
 numpy>=1.26.0,<2.0.0
