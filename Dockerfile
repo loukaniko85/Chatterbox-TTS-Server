@@ -1,17 +1,18 @@
-# Use the runtime image to save space (devel is ~3GB larger)
-# Matrix will pass: 12.1.1-runtime-ubuntu22.04 or 12.8.0-runtime-ubuntu24.04
+# Use runtime as base, matrix handles the version
 ARG CUDA_TAG=12.1.1-runtime-ubuntu22.04
 FROM nvidia/cuda:${CUDA_TAG}
 
-# Environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Install system dependencies and clean up in the same layer
+# Install system dependencies + Build Tools for pkuseg
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.10 \
     python3-pip \
+    python3-dev \
+    build-essential \
+    g++ \
     git \
     ffmpeg \
     libsndfile1 \
@@ -20,22 +21,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# 1. Install optimized Torch based on Matrix (cu121 or cu128)
-# Using --no-cache-dir is CRITICAL here to prevent disk space errors
+# 1. Install optimized Torch first
 ARG TORCH_INDEX=cu121
 RUN pip3 install --no-cache-dir --upgrade pip && \
     pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/${TORCH_INDEX}
 
-# 2. Install cleaned requirements
+# 2. Install NumPy and Cython BEFORE other requirements
+# This prevents pkuseg from failing with "ModuleNotFoundError: No module named 'numpy'"
+RUN pip3 install --no-cache-dir "numpy>=1.26.0,<2.0.0" cython
+
+# 3. Install the rest of the requirements
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# 3. Install Chatterbox-TTS without dependencies to prevent driver overwrites
+# 4. Final install of the TTS engine
 RUN pip3 install --no-cache-dir chatterbox-tts --no-deps
 
-# Copy code last to maximize layer caching
 COPY . .
 
-# Ensure the server binds to 0.0.0.0 for external access
 EXPOSE 8004
 CMD ["python3", "server.py", "--host", "0.0.0.0", "--port", "8004"]
