@@ -11,9 +11,8 @@ Jinja2
 resemble-perth
 s3tokenizer
 conformer
-cython<3.0.0
 
-# --- Audio & Math (Fixed Versions) ---
+# --- Audio & Math ---
 numpy>=1.26.0,<2.0.0
 scipy
 librosa
