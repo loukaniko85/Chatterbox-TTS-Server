@@ -7,9 +7,12 @@ pyyaml
 aiofiles
 Jinja2
 
-# --- Chatterbox Specific Dependencies (Missing from previous step) ---
-resemble-perth  
-pkuseg          
+# --- Chatterbox Core Dependencies (Fixes 'perth' and 'pkuseg' errors) ---
+resemble-perth
+cython
+pkuseg==0.0.25
+s3tokenizer
+conformer
 
 # --- Specialized Audio & Math ---
 numpy>=1.26.0,<2.0.0
