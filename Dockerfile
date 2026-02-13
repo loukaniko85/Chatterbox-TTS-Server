@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# 1. Install optimized Torch first (Matrix-driven)
+# 1. Install optimized Torch first
 ARG TORCH_INDEX=cu121
 RUN pip3 install --no-cache-dir --upgrade pip && \
     pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/${TORCH_INDEX}
@@ -21,19 +21,22 @@ RUN pip3 install --no-cache-dir --upgrade pip && \
 # 2. Install NumPy and Cython
 RUN pip3 install --no-cache-dir "numpy>=1.26.0,<2.0.0" "Cython<3.0.0" wheel setuptools
 
-# 3. THE BULLETPROOF FIX FOR PKUSEG
-# We tell the compiler to ignore errors and just get the package in there.
-# If this still fails, we install it with --no-deps and move on.
-RUN CFLAGS="-Wno-error=format-security -Wno-narrowing" \
-    pip3 install --no-cache-dir pkuseg==0.0.25 || \
-    pip3 install --no-cache-dir pkuseg==0.0.25 --no-build-isolation --install-option="--quiet" || \
-    pip3 install --no-cache-dir pkuseg==0.0.25 --no-deps
+# 3. THE "NUCLEAR" FIX FOR PKUSEG
+# We download the source, strip the C++ extension code from setup.py, and install it.
+# This makes it a pure-python package that CANNOT fail to compile.
+RUN pip3 download --no-cache-dir pkuseg==0.0.25 && \
+    tar -xzf pkuseg-0.0.25.tar.gz && \
+    cd pkuseg-0.0.25 && \
+    sed -i '/ext_modules=\[/,/\]/d' setup.py && \
+    sed -i 's/setup_requires=\["cython", "numpy"\],/setup_requires=\[\],/g' setup.py && \
+    python3 setup.py install && \
+    cd .. && rm -rf pkuseg-0.0.25*
 
 # 4. Install the rest of the requirements
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# 5. Final TTS install (The part you actually care about)
+# 5. Final TTS install
 RUN pip3 install --no-cache-dir chatterbox-tts --no-deps
 
 COPY . .
